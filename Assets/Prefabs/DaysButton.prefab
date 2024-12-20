@@ -149,7 +149,7 @@ GameObject:
   - component: {fileID: 8542586571644489774}
   - component: {fileID: 6251259210468595568}
   m_Layer: 5
-  m_Name: Button
+  m_Name: DaysButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
