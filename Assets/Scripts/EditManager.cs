@@ -69,16 +69,59 @@ public class EditManager : MonoBehaviour
             SaveTasks();
         }
     }
-    void LoadTasks() //저장된 Task를 불러오기
+    void LoadTasks() //저장된 task를 불러오는 메서드
     {
-       //TO-DO : 기존에 저장한 Task들 로드 구현
+        if (PlayerPrefs.HasKey("TaskList"))
+        {
+            string json = PlayerPrefs.GetString("TaskList");
+            List<string> taskTexts = JsonUtility.FromJson<Serialization<string>>(json).ToList();
+
+            foreach (string taskText in taskTexts)
+            {
+                GameObject newTask = Instantiate(taskPrefab, taskTransform);
+                TextMeshProUGUI textComponent = newTask.GetComponentInChildren<TextMeshProUGUI>();
+                textComponent.text = taskText;
+
+                Button taskButton = newTask.GetComponent<Button>();
+                taskButton.onClick.AddListener(() => TaskPressed(newTask));
+
+                taskList.Add(newTask);
+            }
+        }
     }
-    void SaveTasks() //추가 또는 삭제한 Task를 저장하기
+
+    // Serialization 클래스 정의
+    [System.Serializable]
+    public class Serialization<T>
     {
-       
-        //TO-DO: Task들 저장 구현
-       
+        public List<T> Target;
+
+        public Serialization(List<T> target)
+        {
+            Target = target;
+        }
+
+        public List<T> ToList()
+        {
+            return Target;
+        }
     }
+
+    void SaveTasks() //task를 저장하는 메서드
+    {
+        List<string> taskTexts = new List<string>();
+
+        foreach (GameObject task in taskList)
+        {
+            string taskText = task.GetComponentInChildren<TextMeshProUGUI>().text;
+            taskTexts.Add(taskText);
+        }
+
+        string json = JsonUtility.ToJson(new Serialization<string>(taskTexts));
+        PlayerPrefs.SetString("TaskList", json);
+        PlayerPrefs.Save();
+    }
+
 
 
     void Update()
@@ -88,4 +131,5 @@ public class EditManager : MonoBehaviour
             SceneManager.LoadScene("TitleScene");
         }
     }
+
 }
