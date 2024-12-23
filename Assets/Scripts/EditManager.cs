@@ -12,7 +12,7 @@ public class EditManager : MonoBehaviour
     public TMP_InputField inputField;
 
     List<GameObject> taskList = new List<GameObject>(); //task들이 모여있는 리스트
-    GameObject selectedTask; 
+    GameObject selectedTask;
 
     void Start()
     {
@@ -30,8 +30,13 @@ public class EditManager : MonoBehaviour
         popup.SetActive(false);
     }
 
-   public void AddConfirmPressed() //팝업의 확인 버튼 눌렀을 때 실행될 메서드
+    public void AddConfirmPressed() //팝업의 확인 버튼 눌렀을 때 실행될 메서드
     {
+        if (string.IsNullOrWhiteSpace(inputField.text))
+        {
+            return;
+        }
+
         GameObject newTask = Instantiate(taskPrefab, taskTransform);
         TextMeshProUGUI taskText = newTask.GetComponentInChildren<TextMeshProUGUI>();
         taskText.text = inputField.text;
