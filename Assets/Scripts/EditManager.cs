@@ -12,18 +12,17 @@ public class EditManager : MonoBehaviour
     public Transform taskTransform; //task가 들어갈 위치(=task의 부모 오브젝트)
     public TMP_InputField inputField;
 
-    public List<GameObject> taskList = new List<GameObject>(); //task들이 모여있는 리스트
+    public List<TaskData> taskList = new List<TaskData>(); // Task 데이터 리스트
     GameObject selectedTask;
-
 
     private void Start()
     {
+        Instance = this;
         LoadTasks();
     }
 
     public void AddPressed() //추가하기 버튼 눌렀을 때 실행될 메서드
     {
-        Instance = this;
         inputField.text = "";
         popup.SetActive(true);
     }
@@ -40,24 +39,28 @@ public class EditManager : MonoBehaviour
             return;
         }
 
+        TaskData newTaskData = new TaskData
+        {
+            text = inputField.text,
+            completed = false // 기본값은 완료되지 않은 상태
+        };
+
         GameObject newTask = Instantiate(taskPrefab, taskTransform);
         TextMeshProUGUI taskText = newTask.GetComponentInChildren<TextMeshProUGUI>();
-        taskText.text = inputField.text;
+        taskText.text = newTaskData.text;
 
-        Button taskButton = newTask.GetComponent<Button>(); //새로 추가된 task의 버튼 컴포넌트를 읽어오게 하고
-        taskButton.onClick.AddListener(() => TaskPressed(newTask)); //해당 버튼 클릭 시, TaskPressed 함수가 동작하도록 지정함
+        Button taskButton = newTask.GetComponent<Button>();
+        taskButton.onClick.AddListener(() => TaskPressed(newTask));
 
-        taskList.Add(newTask);
+        taskList.Add(newTaskData);
         popup.SetActive(false);
 
         SaveTasks();
-
     }
 
-
-    public void TaskPressed(GameObject task) //task를 누르면 동작하는 함수
+    public void TaskPressed(GameObject task) // Task를 누르면 동작하는 함수
     {
-        if (selectedTask != null) //다른 task를 선택하면, 이전에 선택한 task는 다시 원래 색상으로 되돌림
+        if (selectedTask != null) // 다른 Task를 선택하면, 이전에 선택한 Task는 다시 원래 색상으로 되돌림
         {
             selectedTask.GetComponent<Image>().color = Color.white;
         }
@@ -66,15 +69,42 @@ public class EditManager : MonoBehaviour
         selectedTask.GetComponent<Image>().color = Color.gray;
     }
 
-    public void RemovePressed() //삭제하기 를 누르면 동작하는 함수
+    public void RemovePressed() //삭제하기를 누르면 동작하는 함수
     {
         if (selectedTask != null)
         {
-            taskList.Remove(selectedTask);
-            Destroy(selectedTask);
+            int index = selectedTask.transform.GetSiblingIndex(); // Task 인덱스 가져오기
+            taskList.RemoveAt(index); // 해당 Task 데이터를 리스트에서 제거
+            Destroy(selectedTask); // GameObject 파괴
             selectedTask = null;
 
             SaveTasks();
+        }
+    }
+
+    void SaveTasks() // Task를 저장하는 메서드
+    {
+        string json = JsonUtility.ToJson(new Serialization<TaskData>(taskList));
+        PlayerPrefs.SetString("TaskList", json);
+        PlayerPrefs.Save();
+    }
+
+    public void LoadTasks() //저장된 Task를 불러오는 메서드
+    {
+        if (PlayerPrefs.HasKey("TaskList"))
+        {
+            string json = PlayerPrefs.GetString("TaskList");
+            taskList = JsonUtility.FromJson<Serialization<TaskData>>(json).ToList();
+
+            foreach (TaskData taskData in taskList)
+            {
+                GameObject newTask = Instantiate(taskPrefab, taskTransform);
+                TextMeshProUGUI textComponent = newTask.GetComponentInChildren<TextMeshProUGUI>();
+                textComponent.text = taskData.text;
+
+                Button taskButton = newTask.GetComponent<Button>();
+                taskButton.onClick.AddListener(() => TaskPressed(newTask));
+            }
         }
     }
 
@@ -95,42 +125,6 @@ public class EditManager : MonoBehaviour
         }
     }
 
-    void SaveTasks() //task를 저장하는 메서드
-    {
-        List<string> taskTexts = new List<string>();
-
-        foreach (GameObject task in taskList)
-        {
-            string taskText = task.GetComponentInChildren<TextMeshProUGUI>().text;
-            taskTexts.Add(taskText);
-        }
-
-        string json = JsonUtility.ToJson(new Serialization<string>(taskTexts));
-        PlayerPrefs.SetString("TaskList", json);
-        PlayerPrefs.Save();
-    }
-    public void LoadTasks() //저장된 task를 불러오는 메서드
-    {
-        if (PlayerPrefs.HasKey("TaskList"))
-        {
-            string json = PlayerPrefs.GetString("TaskList");
-            List<string> taskTexts = JsonUtility.FromJson<Serialization<string>>(json).ToList();
-
-            foreach (string taskText in taskTexts)
-            {
-                GameObject newTask = Instantiate(taskPrefab, taskTransform);
-                TextMeshProUGUI textComponent = newTask.GetComponentInChildren<TextMeshProUGUI>();
-                textComponent.text = taskText;
-
-                Button taskButton = newTask.GetComponent<Button>();
-                taskButton.onClick.AddListener(() => TaskPressed(newTask));
-
-                taskList.Add(newTask);
-            }
-        }
-    }
-
-
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -138,5 +132,4 @@ public class EditManager : MonoBehaviour
             SceneManager.LoadScene("TitleScene");
         }
     }
-
 }

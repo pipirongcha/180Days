@@ -4,8 +4,11 @@ using UnityEngine.SceneManagement;
 public class TitleManager : MonoBehaviour
 {
     [SerializeField]
-    GameObject ExitPopup;
-
+    GameObject Popup;
+    [SerializeField]
+    GameObject ResetPopup;
+    [SerializeField]
+    GameObject ResetCompletePopup;
   public void EditPressed()
     {
         SceneManager.LoadScene("EditScene");
@@ -27,16 +30,36 @@ public class TitleManager : MonoBehaviour
         Application.Quit();
     }
 
-    public void ExitCanclePressed()
+    public void CanclePressed()
     {
-        ExitPopup.SetActive(false);
+        Popup.SetActive(false);
+        ResetPopup.SetActive(false);
+    }
+
+    public void ResetPressed()
+    {
+        Popup.SetActive(false);
+        ResetPopup.SetActive(true);
+    }
+
+    public void ResetOKPressed()
+    {
+        PlayerPrefs.DeleteAll();
+        ResetPopup.SetActive(false);
+        ResetCompletePopup.SetActive(true);
+    }
+
+    public void ResetCompleteClosePressed()
+    {
+        ResetCompletePopup.SetActive(false);
+
     }
 
    void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            ExitPopup.SetActive(true);
+            Popup.SetActive(true);
         }
     }
 }

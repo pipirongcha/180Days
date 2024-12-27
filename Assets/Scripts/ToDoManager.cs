@@ -1,100 +1,229 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using static EditManager;
 
 public class ToDoManager : MonoBehaviour
 {
-
+    public static ToDoManager Instance; 
     public GameObject taskPrefab; //할 일 목록(Scrollview의 Contents)으로 들어갈 task 오브젝트의 프리팹
     public Transform taskTransform; //task가 들어갈 위치(=task의 부모 오브젝트)
-    public TextMeshProUGUI AchievementText;
+    public TextMeshProUGUI achievementText;
 
-    public int DaysCount; //AchievementText의 'n번째 기적의 날'에 들어갈 숫자 n 
-    public int AchievePercent = 0;
-    float taskCount;
-    float completeCount;
-    string review;
+    public int dayCount; //AchievementText의 'n번째 기적의 날'에 들어갈 숫자 n 
+    public int achievePercent = 0;
+    float taskCount = 0;
+    public float completeCount = 0;
+    public string review;
 
-
-
+    private DateTime lastLoginDate;
+    public List<TaskData> taskList = new List<TaskData>(); // Task 데이터 리스트
+    
     void Start()
     {
-        LoadTasks();
-        LoadMent();
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+
+        LoadProgress(); // 게임 시작 시, 마지막 로그인 날짜를 불러오기
+        CheckDate(); // 날짜 비교 후 숫자 증가 여부 체크
+        SaveProgress(); // 최신 정보 저장
+        LoadTasks();    
     }
 
-    public void LoadTasks() //저장된 task를 불러오는 메서드
+    public void LoadTasks()
     {
         if (PlayerPrefs.HasKey("TaskList"))
         {
             string json = PlayerPrefs.GetString("TaskList");
-            List<string> taskTexts = JsonUtility.FromJson<Serialization<string>>(json).ToList();
+            taskList = JsonUtility.FromJson<Serialization<TaskData>>(json).ToList();
 
-            foreach (string taskText in taskTexts)
+            foreach (TaskData taskData in taskList)
             {
-                taskCount++;
+                taskCount++; // 전체 Task 개수 증가
                 GameObject newTask = Instantiate(taskPrefab, taskTransform);
                 TextMeshProUGUI textComponent = newTask.GetComponentInChildren<TextMeshProUGUI>();
-                textComponent.text = taskText;
+                textComponent.text = taskData.text;
+
+                if (taskData.completed)
+                {
+                    completeCount++; // 완료된 Task 개수 증가
+                    textComponent.fontStyle |= FontStyles.Strikethrough;
+                }
 
                 Button taskButton = newTask.GetComponent<Button>();
-                taskButton.onClick.AddListener(() => TaskComplete(newTask));
+                taskButton.onClick.AddListener(() => ToggleTaskCompletion(newTask, taskData));
             }
+
+            LoadMent(); // 달성률 업데이트
         }
     }
 
-    void LoadMent()
+    public void ToggleTaskCompletion(GameObject task, TaskData taskData)
     {
-        AchievePercent = (int)(completeCount / taskCount * 100) ;
+        TextMeshProUGUI textComponent = task.GetComponentInChildren<TextMeshProUGUI>();
 
-        if (AchievePercent <= 25)
-        {
-            review = "많이 부족합니다.";
-        }
-        else if(AchievePercent > 25 && AchievePercent <= 50)
-        {
-            review = "더 필요합니다.";
-        }
-        else if(AchievePercent > 50 && AchievePercent <= 75)
-        {
-            review = "적당량 모였습니다.";
-        }
-        else if(AchievePercent == 100)
-        {
-            review = "전부 모였습니다!";
-        }
+        // 완료 상태를 토글
+        taskData.completed = !taskData.completed;
 
-        AchievementText.text = "오늘로 " + DaysCount + "번째 기적의 날입니다.\r\n일일 기적 달성률은 " + AchievePercent + "% 입니다.\r\n오늘의 기적이 " + review;
-    }
-    public void TaskComplete(GameObject task)
-    {
-        TextMeshProUGUI clickedTask = task.GetComponentInChildren<TextMeshProUGUI>();
-
-        // 취소선이 그어져 있다면
-        if ((clickedTask.fontStyle & FontStyles.Strikethrough) == FontStyles.Strikethrough)
+        // Strikethrough 스타일 추가/제거
+        if (taskData.completed)
         {
-            clickedTask.fontStyle &= ~FontStyles.Strikethrough; // 취소선 제거
-            completeCount--;
+            textComponent.fontStyle |= FontStyles.Strikethrough;
+            completeCount++;
             LoadMent();
         }
         else
         {
-            //취소선이 없다면, 취소선 추가 (두꺼운 글씨는 유지 유지)
-            clickedTask.fontStyle |= FontStyles.Strikethrough;
-            completeCount++;
+            textComponent.fontStyle &= ~FontStyles.Strikethrough;
+            completeCount--;
             LoadMent();
         }
+
+        // 변경된 Task 리스트 저장
+        SaveTasks();
+        SaveDailyTasks();
+    }
+
+    void LoadMent()
+    {
+        achievePercent = taskCount > 0 ? (int)(completeCount / taskCount * 100) : 0;
+
+        if (achievePercent <= 25)
+        {
+            review = "많이 부족합니다.";
+        }
+        else if(achievePercent > 25 && achievePercent <= 50)
+        {
+            review = "더 필요합니다.";
+        }
+        else if(achievePercent > 50 && achievePercent <= 75)
+        {
+            review = "적당량 모였습니다.";
+        }
+        else if(achievePercent == 100)
+        {
+            review = "전부 모였습니다!";
+        }
+
+        achievementText.text = "오늘로 " + dayCount + "번째 기적의 날입니다.\r\n일일 기적 달성률은 " + achievePercent + "% 입니다.\r\n오늘의 기적이 " + review;
     }
  
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            DataSaver.Instance.SaveSceneData();
+            SaveDailyTasks();
             SceneManager.LoadScene("TItleScene");
         }
     }
+
+    void LoadProgress()
+    {
+        // PlayerPrefs에서 마지막 로그인 날짜를 불러옴
+        string lastLoginString = PlayerPrefs.GetString("LastLoginDate", DateTime.Now.ToString());
+        lastLoginDate = DateTime.Parse(lastLoginString);
+
+        // PlayerPrefs에서 저장된 일수 불러오기
+        dayCount = PlayerPrefs.GetInt("DayCount", 1);
+    }
+
+    void SaveProgress()
+    {
+        // 현재 날짜를 문자열로 저장
+        PlayerPrefs.SetString("LastLoginDate", DateTime.Now.ToString());
+        // 증가된 일수를 저장
+        PlayerPrefs.SetInt("DayCount", dayCount);
+        PlayerPrefs.Save();
+    }
+
+    void CheckDate()
+    {
+        // 오늘 날짜와 마지막 로그인 날짜를 비교
+        DateTime currentDate = DateTime.Now;
+
+        // 날짜가 달라졌다면
+        if (currentDate.Date > lastLoginDate.Date)
+        {
+            // 날짜 차이만큼 dayCount 증가
+            int daysPassed = (currentDate - lastLoginDate).Days;
+            dayCount += daysPassed; // 며칠이 지났는지에 따라 일수 증가
+
+            // 날짜가 바뀌었을 때, 할 일 목록에서 완료된 항목들을 초기화
+            ResetCompletedTasks();
+        }
+    }
+
+    void ResetCompletedTasks()
+    {
+        // Task 목록에서 완료된 항목을 초기화 (밑줄 제거)
+        foreach (TaskData taskData in taskList)
+        {
+            if (taskData.completed)
+            {
+                taskData.completed = false; // 완료 상태 초기화
+            }
+        }
+
+        // Task 목록을 저장하여 상태 변경을 반영
+        SaveTasks();
+        LoadTasks(); // 변경된 상태로 할 일 목록을 다시 로드하여 화면 갱신
+    }
+
+    public void SaveTasks()
+    {
+        // Task 리스트를 JSON으로 변환하여 저장
+        string json = JsonUtility.ToJson(new Serialization<TaskData>(taskList));
+        PlayerPrefs.SetString("TaskList", json);
+        PlayerPrefs.Save();
+    }
+    public void SaveDailyTasks()
+    {
+        // 기존 데이터를 불러옴
+        string json = PlayerPrefs.GetString("DailyTaskCollection", "{}");
+        DailyTaskCollection collection = JsonUtility.FromJson<DailyTaskCollection>(json) ?? new DailyTaskCollection();
+
+        // 현재 날짜 확인
+        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
+
+        // 현재 날짜에 해당하는 기록이 있는지 확인
+        DailyTaskData existingData = collection.dailyTasks.Find(d => d.date == currentDate);
+
+        if (existingData == null)
+        {
+            // 새로 추가
+            DailyTaskData newData = new DailyTaskData
+            {
+                date = currentDate,
+                tasks = new List<TaskData>(taskList) // 현재 Task 데이터를 복사
+            };
+            collection.dailyTasks.Add(newData);
+        }
+        else
+        {
+            // 기존 데이터를 업데이트
+            existingData.tasks = new List<TaskData>(taskList);
+        }
+
+        // 저장
+        string updatedJson = JsonUtility.ToJson(collection);
+        PlayerPrefs.SetString("DailyTaskCollection", updatedJson);
+        PlayerPrefs.Save();
+    }
+
+    
+
+ 
+
+
 }
+
