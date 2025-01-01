@@ -56,7 +56,10 @@ public class TitleManager : MonoBehaviour
             int daysPassed = (currentDate - lastLoginDate).Days;
             dayCount += daysPassed; // 며칠이 지났는지에 따라 일수 증가
             dayChanged = true;
-            loginDays++;
+            if (loginDays < 180)
+            {
+                loginDays++;
+            }
         }
     }
 
