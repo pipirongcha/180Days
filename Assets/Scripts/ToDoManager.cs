@@ -18,10 +18,11 @@ public class ToDoManager : MonoBehaviour
     float taskCount = 0;
     public float completeCount = 0;
     public string review;
-
+    
     private DateTime lastLoginDate;
     public List<TaskData> taskList = new List<TaskData>(); // Task 데이터 리스트
-    
+
+    int totalAchievement;
     void Start()
     {
         if (Instance == null)
@@ -32,11 +33,15 @@ public class ToDoManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
-        LoadProgress(); // 게임 시작 시, 마지막 로그인 날짜를 불러오기
-        CheckDate(); // 날짜 비교 후 숫자 증가 여부 체크
-        SaveProgress(); // 최신 정보 저장
-        LoadTasks();    
+        dayCount = PlayerPrefs.GetInt("DayCount", 1);
+        totalAchievement = PlayerPrefs.GetInt("TotalAchievement", 0);
+        LoadTasks();
+        if(TitleManager.Instance.dayChanged == true)
+        {
+            
+            ResetCompletedTasks();
+            TitleManager.Instance.dayChanged = false;
+        }
     }
 
     public void LoadTasks()
@@ -127,44 +132,13 @@ public class ToDoManager : MonoBehaviour
         }
     }
 
-    void LoadProgress()
-    {
-        // PlayerPrefs에서 마지막 로그인 날짜를 불러옴
-        string lastLoginString = PlayerPrefs.GetString("LastLoginDate", DateTime.Now.ToString());
-        lastLoginDate = DateTime.Parse(lastLoginString);
-
-        // PlayerPrefs에서 저장된 일수 불러오기
-        dayCount = PlayerPrefs.GetInt("DayCount", 1);
-    }
-
-    void SaveProgress()
-    {
-        // 현재 날짜를 문자열로 저장
-        PlayerPrefs.SetString("LastLoginDate", DateTime.Now.ToString());
-        // 증가된 일수를 저장
-        PlayerPrefs.SetInt("DayCount", dayCount);
-        PlayerPrefs.Save();
-    }
-
-    void CheckDate()
-    {
-        // 오늘 날짜와 마지막 로그인 날짜를 비교
-        DateTime currentDate = DateTime.Now;
-
-        // 날짜가 달라졌다면
-        if (currentDate.Date > lastLoginDate.Date)
-        {
-            // 날짜 차이만큼 dayCount 증가
-            int daysPassed = (currentDate - lastLoginDate).Days;
-            dayCount += daysPassed; // 며칠이 지났는지에 따라 일수 증가
-
-            // 날짜가 바뀌었을 때, 할 일 목록에서 완료된 항목들을 초기화
-            ResetCompletedTasks();
-        }
-    }
+   
 
     void ResetCompletedTasks()
     {
+        totalAchievement += achievePercent;
+        PlayerPrefs.SetInt("TotalAchievement", totalAchievement);
+        PlayerPrefs.Save();
         // Task 목록에서 완료된 항목을 초기화 (밑줄 제거)
         foreach (TaskData taskData in taskList)
         {

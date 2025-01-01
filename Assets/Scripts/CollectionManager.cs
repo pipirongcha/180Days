@@ -53,6 +53,11 @@ public class CollectionManager : MonoBehaviour
             SceneManager.LoadScene("ToDoScene");
         }
     }
+
+    public void ReportPressed()
+    {
+        SceneManager.LoadScene("ReportScene");
+    }
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))

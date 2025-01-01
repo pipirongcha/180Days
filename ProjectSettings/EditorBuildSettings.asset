@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ToDoScene.unity
     guid: ef350d73db11ab44e8067f831f8f80bb
+  - enabled: 1
+    path: Assets/Scenes/ReportScene.unity
+    guid: ed45289274e8db740a6f14e87de3e767
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   m_UseUCBPForAssetBundles: 0
