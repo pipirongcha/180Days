@@ -20,7 +20,8 @@ public class ToDoManager : MonoBehaviour
     public string review;
     
     private DateTime lastLoginDate;
-    public List<TaskData> taskList = new List<TaskData>(); // Task 데이터 리스트
+    public List<TaskData> taskList = new List<TaskData>(); // 루틴으로 짜여진 Task 데이터 리스트
+    public List<TaskData> dailytaskList = new List<TaskData>(); // 선택된 날짜의 Task 데이터 리스트
 
     int totalAchievement;
     void Start()
@@ -36,22 +37,32 @@ public class ToDoManager : MonoBehaviour
         dayCount = PlayerPrefs.GetInt("DayCount", 1);
         totalAchievement = PlayerPrefs.GetInt("TotalAchievement", 0);
         LoadTasks();
-        if(TitleManager.Instance.dayChanged == true)
+        if(TitleManager.Instance.dayChanged)
         {
             
             ResetCompletedTasks();
             TitleManager.Instance.dayChanged = false;
         }
+        LoadDayTasks(); // 변경된 상태로 할 일 목록을 다시 로드하여 화면 갱신
     }
 
-    public void LoadTasks()
+    public void LoadTasks() 
     {
+        taskList.Clear();
         if (PlayerPrefs.HasKey("TaskList"))
-        {
+        { 
             string json = PlayerPrefs.GetString("TaskList");
             taskList = JsonUtility.FromJson<Serialization<TaskData>>(json).ToList();
+        }
+    }
 
-            foreach (TaskData taskData in taskList)
+    public void LoadDayTasks()
+    {
+        if (PlayerPrefs.HasKey("SelectedDayTasks"))
+        {
+            string json = PlayerPrefs.GetString("SelectedDayTasks");
+            dailytaskList = JsonUtility.FromJson<Serialization<TaskData>>(json).ToList();
+            foreach (TaskData taskData in dailytaskList)
             {
                 taskCount++; // 전체 Task 개수 증가
                 GameObject newTask = Instantiate(taskPrefab, taskTransform);
@@ -149,15 +160,22 @@ public class ToDoManager : MonoBehaviour
         }
 
         // Task 목록을 저장하여 상태 변경을 반영
-        SaveTasks();
-        LoadTasks(); // 변경된 상태로 할 일 목록을 다시 로드하여 화면 갱신
+        CreateDailyTask();
+    }
+
+    public void CreateDailyTask()
+    {
+        // Task 리스트를 JSON으로 변환하여 저장
+        string json = JsonUtility.ToJson(new Serialization<TaskData>(taskList));
+        PlayerPrefs.SetString("SelectedDayTasks", json);
+        PlayerPrefs.Save();
     }
 
     public void SaveTasks()
     {
         // Task 리스트를 JSON으로 변환하여 저장
-        string json = JsonUtility.ToJson(new Serialization<TaskData>(taskList));
-        PlayerPrefs.SetString("TaskList", json);
+        string json = JsonUtility.ToJson(new Serialization<TaskData>(dailytaskList));
+        PlayerPrefs.SetString("SelectedDayTasks", json);
         PlayerPrefs.Save();
     }
     public void SaveDailyTasks()
@@ -167,8 +185,7 @@ public class ToDoManager : MonoBehaviour
         DailyTaskCollection collection = JsonUtility.FromJson<DailyTaskCollection>(json) ?? new DailyTaskCollection();
 
         // 현재 날짜 확인
-        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
-
+        string currentDate = DateManager.Instance.selectedDate;
         // 현재 날짜에 해당하는 기록이 있는지 확인
         DailyTaskData existingData = collection.dailyTasks.Find(d => d.date == currentDate);
 
@@ -178,14 +195,14 @@ public class ToDoManager : MonoBehaviour
             DailyTaskData newData = new DailyTaskData
             {
                 date = currentDate,
-                tasks = new List<TaskData>(taskList) // 현재 Task 데이터를 복사
+                tasks = new List<TaskData>(dailytaskList) // 현재 Task 데이터를 복사
             };
             collection.dailyTasks.Add(newData);
         }
         else
         {
             // 기존 데이터를 업데이트
-            existingData.tasks = new List<TaskData>(taskList);
+            existingData.tasks = new List<TaskData>(dailytaskList);
         }
 
         // 저장
