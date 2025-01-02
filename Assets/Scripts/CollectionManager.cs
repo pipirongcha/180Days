@@ -7,49 +7,50 @@ using System.Collections.Generic;
 
 public class CollectionManager : MonoBehaviour
 {
-    public Button loadButtonPrefab; // ³¯Â¥º°·Î ToDoSceneÀ» ·ÎµåÇÒ ¹öÆ° ÇÁ¸®ÆÕ
-    public Transform buttonParent; // ¹öÆ°µéÀÌ ¹èÄ¡µÉ ºÎ¸ð ¿ÀºêÁ§Æ® (¿¹: ScrollView)
+    public Button loadButtonPrefab; // ï¿½ï¿½Â¥ï¿½ï¿½ï¿½ï¿½ ToDoSceneï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    public Transform buttonParent; // ï¿½ï¿½Æ°ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½: ScrollView)
 
     void Start()
     {
-        LoadDailyRecords(); // ½ÃÀÛ ½Ã, ±â·ÏµéÀ» ·ÎµåÇÏ¿© ¹öÆ°À» »ý¼º
+        LoadDailyRecords(); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     }
 
     void LoadDailyRecords()
     {
-        // PlayerPrefs¿¡¼­ DailyTaskCollection µ¥ÀÌÅÍ ºÒ·¯¿À±â
+        // PlayerPrefsï¿½ï¿½ï¿½ï¿½ DailyTaskCollection ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½ï¿½ï¿½
         string json = PlayerPrefs.GetString("DailyTaskCollection", "{}");
         DailyTaskCollection collection = JsonUtility.FromJson<DailyTaskCollection>(json) ?? new DailyTaskCollection();
 
-        // °¢ ³¯Â¥¿¡ ´ëÇÑ ¹öÆ° »ý¼º
+        // ï¿½ï¿½ ï¿½ï¿½Â¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½
         foreach (DailyTaskData dailyTask in collection.dailyTasks)
         {
-            // »õ·Î¿î ¹öÆ° »ý¼º
+            // ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½
             Button newButton = Instantiate(loadButtonPrefab, buttonParent);
-            // ¹öÆ° ÅØ½ºÆ® ¼³Á¤ (³¯Â¥ Ç¥½Ã)
+            // ï¿½ï¿½Æ° ï¿½Ø½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Â¥ Ç¥ï¿½ï¿½)
             TextMeshProUGUI buttonText = newButton.GetComponentInChildren<TextMeshProUGUI>();
             buttonText.text = dailyTask.date;
 
-            // ¹öÆ° Å¬¸¯ ½Ã ÇØ´ç ³¯Â¥ÀÇ ÀÛ¾÷ µ¥ÀÌÅÍ¸¦ ·ÎµåÇÏ¿© ToDoSceneÀ¸·Î ÀÌµ¿
+            // ï¿½ï¿½Æ° Å¬ï¿½ï¿½ ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½Â¥ï¿½ï¿½ ï¿½Û¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Îµï¿½ï¿½Ï¿ï¿½ ToDoSceneï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
             newButton.onClick.AddListener(() => LoadToDoSceneForDate(dailyTask.date));
         }
     }
 
     void LoadToDoSceneForDate(string date)
     {
-        // ¼±ÅÃÇÑ ³¯Â¥ÀÇ µ¥ÀÌÅÍ¸¦ PlayerPrefs¿¡¼­ ·ÎµåÇÏ°í, ÇØ´ç ¾ÀÀ¸·Î ÀÌµ¿
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Â¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ PlayerPrefsï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½Ï°ï¿½, ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
         string json = PlayerPrefs.GetString("DailyTaskCollection", "{}");
         DailyTaskCollection collection = JsonUtility.FromJson<DailyTaskCollection>(json) ?? new DailyTaskCollection();
 
         DailyTaskData selectedData = collection.dailyTasks.Find(d => d.date == date);
         if (selectedData != null)
         {
-            // ÇØ´ç ³¯Â¥ÀÇ Task µ¥ÀÌÅÍ¸¦ PlayerPrefs¿¡ ÀÓ½Ã ÀúÀå
+            DateManager.Instance.selectedDate = selectedData.date;
+            // ï¿½Ø´ï¿½ ï¿½ï¿½Â¥ï¿½ï¿½ Task ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ PlayerPrefsï¿½ï¿½ ï¿½Ó½ï¿½ ï¿½ï¿½ï¿½ï¿½
             string tasksJson = JsonUtility.ToJson(new Serialization<TaskData>(selectedData.tasks));
             PlayerPrefs.SetString("SelectedDayTasks", tasksJson);
             PlayerPrefs.Save();
 
-            // ToDoSceneÀ¸·Î ÀÌµ¿
+            // ToDoSceneï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
             SceneManager.LoadScene("ToDoScene");
         }
     }
