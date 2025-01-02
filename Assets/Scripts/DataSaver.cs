@@ -57,8 +57,6 @@ public class DataSaver : MonoBehaviour
         string json = JsonUtility.ToJson(sceneData);
         PlayerPrefs.SetString("SceneData_" + toDoManager.dayCount, json); // 날짜별로 저장
         PlayerPrefs.Save();
-
-        Debug.Log("Scene 데이터 저장 완료!");
     }
 }
 
