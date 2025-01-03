@@ -40,7 +40,7 @@ public class DataSaver : MonoBehaviour
         // 현재 씬 데이터를 객체로 생성
         SceneData sceneData = new SceneData
         {
-            dayCount = toDoManager.dayCount,
+            dayCount = DateManager.Instance.DayCount(),
             tasks = new List<string>(),
             achievePercent = toDoManager.achievePercent,
             review = toDoManager.review
@@ -55,7 +55,7 @@ public class DataSaver : MonoBehaviour
 
         // JSON 형식으로 변환 후 저장
         string json = JsonUtility.ToJson(sceneData);
-        PlayerPrefs.SetString("SceneData_" + toDoManager.dayCount, json); // 날짜별로 저장
+        PlayerPrefs.SetString("SceneData_" + DateManager.Instance.DayCount(), json); // 날짜별로 저장
         PlayerPrefs.Save();
     }
 }
