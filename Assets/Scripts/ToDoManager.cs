@@ -13,13 +13,11 @@ public class ToDoManager : MonoBehaviour
     public Transform taskTransform; //task가 들어갈 위치(=task의 부모 오브젝트)
     public TextMeshProUGUI achievementText;
 
-    public int dayCount; //AchievementText의 'n번째 기적의 날'에 들어갈 숫자 n 
     public int achievePercent = 0;
     float taskCount = 0;
     public float completeCount = 0;
     public string review;
     
-    private DateTime lastLoginDate;
     public List<TaskData> taskList = new List<TaskData>(); // 루틴으로 짜여진 Task 데이터 리스트
     public List<TaskData> dailytaskList = new List<TaskData>(); // 선택된 날짜의 Task 데이터 리스트
 
@@ -34,7 +32,6 @@ public class ToDoManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        dayCount = PlayerPrefs.GetInt("DayCount", 1);
         totalAchievement = PlayerPrefs.GetInt("TotalAchievement", 0);
         LoadTasks();
         if(TitleManager.Instance.dayChanged)
@@ -130,7 +127,7 @@ public class ToDoManager : MonoBehaviour
             review = "전부 모였습니다!";
         }
 
-        achievementText.text = "오늘로 " + dayCount + "번째 기적의 날입니다.\r\n일일 기적 달성률은 " + achievePercent + "% 입니다.\r\n오늘의 기적이 " + review;
+        achievementText.text = "오늘로 " + DateManager.Instance.DayCount() + "번째 기적의 날입니다.\r\n일일 기적 달성률은 " + achievePercent + "% 입니다.\r\n오늘의 기적이 " + review;
     }
  
     void Update()
@@ -139,6 +136,7 @@ public class ToDoManager : MonoBehaviour
         {
             DataSaver.Instance.SaveSceneData();
             SaveDailyTasks();
+            DateManager.Instance.resetSelectedDate();
             SceneManager.LoadScene("TItleScene");
         }
     }

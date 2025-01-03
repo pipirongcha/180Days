@@ -92,7 +92,7 @@ public class TitleManager : MonoBehaviour
         }
         else
         {
-            SceneManager.LoadScene("ToDoScene");
+            DateManager.Instance.LoadToDoSceneToday();
         }
     }
 
